@@ -45,7 +45,7 @@ while time.time() < t_end: # Goes until timer runs out
         print(rho_av)
         if theta_av<-0.174533 or theta_av>0.174533: #Angle measured in radians
             print('Drone Not going straight on line')
-        if rho_av<300 or rho_av>600:                #Took Approximate Values. Need to be changed
+        if rho_av<220 or rho_av>420:                #Took Approximate Values. Centre is approximately at 320 for my camera
             print('Drone not centred on line')
         cv2.imshow('frame',edges)
         out.write(edges)
