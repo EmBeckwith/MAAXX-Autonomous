@@ -2,37 +2,33 @@ import numpy as np
 import cv2
 import time
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0) # start video capture. 0 is used as only one camera plugged in
 
-t_end = time.time() + 60 *0.5
-out = cv2.VideoWriter('test2.avi', -1, 20.0, (640,480))
+t_end = time.time() + 60 *0.5 # Takes current time and adds 30 seconds (always seems to output 22-23 seconds for some reason)
 
-while time.time() < t_end:
-    # Capture frame-by-frame
-    ret, frame = cap.read()
-    # Our operations on the frame come here
+out = cv2.VideoWriter('test2.avi', -1, 20.0, (640,480)) # Initialise variable for video output
+
+while time.time() < t_end: # Goes until timer runs out
+
+    ret, frame = cap.read() # Capture frame-by-frame
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray,300,425,apertureSize = 5)
+
+    edges = cv2.Canny(gray,300,425,apertureSize = 5) # Canny edge detection. If aperture size is decreased, will need to lower thresholds in box 2 and 3
     #
-    lines = cv2.HoughLines(edges,1,np.pi/60,175)
-    i=0
-    # #img2=cv2.imwrite('edges5.jpg',edges)
+    lines = cv2.HoughLines(edges,1,np.pi/360,175) # Adjust transform in
+
+    # Need to test more on curved shapes. Harder to adjust it so it only finds the line if the object is curved. Some compromise between apertureSize, and the three thresholds must be
+    #found to gaurantee line detection
+
+    i=0 # Iniialise a count of how many rows there are in the lines transform. Could be removed if I become better at coding and figure out how to use nd array
     rho_sum=0
     theta_sum=0
     if isinstance(lines, np.ndarray):
-        while i<len(lines):
-            for rho,theta in lines[i]:
-                a = np.cos(theta)
-                b = np.sin(theta)
-                x0 = a*rho
-                y0 = b*rho
-                x1 = int(x0+1000*(-b))
-                y1 = int(y0+1000*(a))
-                x2 = int(x0-1000*(-b))
-                y2 = int(y0-1000*(a))
-                rho_sum=rho+rho_sum
+        while i<len(lines): # This while loop could potentially be replaced by a sum command of both columns of arrays. Left in at this point but could be more efficient.
+            for rho,theta in lines[i]: # This line only exists because I can't figure out how to call ndarrays and its getting late
+                rho_sum=rho+rho_sum #Finds sum of all rows and thetas
                 theta_sum=theta+theta_sum
-                    #cv2.line(frame,(x1,y1),(x2,y2),(0,255,0),2)
                 i=i+1
         rho_av=rho_sum/i
         theta_av=theta_sum/i
@@ -45,12 +41,12 @@ while time.time() < t_end:
         x2 = int(x0-1000*(-b))
         y2 = int(y0-1000*(a))
         cv2.line(edges,(x1,y1),(x2,y2),(255,0,0),10)
-            #print('finished')
-            #print(i)
-            #print(rho_sum)
-            #print(theta_sum)
         print(theta_av)
         print(rho_av)
+        if theta_av<-0.174533 or theta_av>0.174533: #Angle measured in radians
+            print('Drone Not going straight on line')
+        if rho_av<300 or rho_av>600:                #Took Approximate Values. Need to be changed
+            print('Drone not centred on line')
         cv2.imshow('frame',edges)
         out.write(edges)
     else:
